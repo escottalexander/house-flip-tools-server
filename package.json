@@ -1,0 +1,24 @@
+{
+  "name": "house-flip-tools-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "run": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+
+  },
+  "author": "Elliott Alexander",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "sequelize": "^4.41.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "chai-http": "^4.2.0",
+    "mocha": "^5.2.0",
+    "nodemon": "^1.18.6"
+  }
+}
