@@ -1,0 +1,13 @@
+language: node_js
+node_js: node
+services:
+- postgresql
+before_script:
+- psql -c 'create database travis_ci_test;' -U postgres
+deploy:
+  provider: heroku
+  api_key:
+    secure: FXnH+uVpsmJBKVALxqbUScyx4ebfLIvFzDhjh6ZFBCAAt52h7MUj13nQcfakTwwXa6ISr5senzXR1LHvzplJntNRfL2GsPwMD9/wSjeVg4039RGAFMLDjWnivv+eU7ydwtOTeMrOexH3FVQ3QNJYDn/8z9zWg/IRA62e6XxEl0KIQEwpUIbNaUS2XPhz9iLSBB1VWtfaTpzpde8CNaiaa87oDded30eNYbcF2rcXoeOu6Q33qirKd3ed76+ZikYq4A7h5aNCCqMoSEjqDKnBEaiixrzBBSEDYY0zkA75mBdRGnexnhGqKdmpKHFrGl1zdLT5GVLWx7c23FPrF90HMgGTUkj6WBmhqr9OakDljatspCpk3yt67dmIlzKwPPf7l22vX5EcyjcPFPOTiG1CzeOyyZKdT0omxP/0eLOvJ4ZYL00ZxLVFsPt4+sihi1d9HqRZvMFbeLEc+GQ2Cf6hLJGqAyp2NFvi4YAQH8SncSzLMSQ1lnL0PQMdCRSWPsPu1z78okrSmPAdsToD28UEo5Zg8fVrLm9Fs9pkLL6xlIUTK87vd0jfeD6GRX18YTHtFgebXWPwlxG1AQ1zXg3eV8Yvo3P4lhNMdfTjkpGUPZ42HGCJHUJnCtVcDWU5lzNeJRfMItzE4ZzALUBkKSXOZy6B9j8vRtM1A3bYvbYAy/w=
+  app: afternoon-brushlands-67926
+  on:
+    repo: escottalexander/house-flip-tools-server
