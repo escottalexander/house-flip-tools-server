@@ -5,13 +5,13 @@
   "main": "server.js",
   "scripts": {
     "start": "nodemon server.js",
-    "test": "mocha"
-
+    "test": "mocha --exit"
   },
   "author": "Elliott Alexander",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.18.3",
+    "cors": "^2.8.5",
     "express": "^4.16.4",
     "sequelize": "^4.41.1"
   },
