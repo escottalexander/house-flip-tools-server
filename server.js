@@ -10,7 +10,8 @@ app.use(
 );
 
 const PORT = process.env.PORT || 3000;
-
+app.get('/', (req, res) =>
+    res.status(200).json({ welcome: user }))
 app.get('/api/*', (req, res) => {
     res.json({ ok: true });
 });
