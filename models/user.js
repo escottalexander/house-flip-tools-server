@@ -1,45 +1,52 @@
-module.exports = function (sequelize, Sequelize) {
+const Sequelize = require('sequelize');
+const { sequelize } = require('../db/sequelize');
+const bcrypt = require('bcryptjs');
 
-    var User = sequelize.define('user', {
-        id: { autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
-        username: { type: Sequelize.TEXT },
-        email: { type: Sequelize.STRING, validate: { isEmail: true } },
-        password: { type: Sequelize.STRING, allowNull: false },
-        last_login: { type: Sequelize.DATE },
-        // properties: {
-        //     type: sequelize.INTEGER,
-        //     refrences: {
-        //         model: Property,
-        //         key: 'id',
-        //         deferrable: Sequelize.Deferrable.INITIALLY_IMMEDIATE
-        //     }
-        // },
-        status: { type: Sequelize.ENUM('active', 'inactive'), defaultValue: 'active' }
 
-    });
+const User = sequelize.define('User', {
+    id: { autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
+    username: { type: Sequelize.TEXT },
+    email: { type: Sequelize.STRING, validate: { isEmail: true } },
+    password: { type: Sequelize.STRING, allowNull: false }
 
-    User.associate = function (models) {
-        User.hasMany(
-            models.Property,
-            {
-                as: 'properties',
-                foreignKey: { allowNull: false },
-                onDelete: 'CASCADE'
-            }
-        )
-    }
+}, { tableName: 'users', underscored: true });
 
-    User.prototype.apiRepr = function () {
-        return {
-            id: this.id,
-            username: this.username,
-            email: this.email,
-            lastLogin: this.last_login,
-            status: this.status,
-            properties: this.properties
+User.associate = function (models) {
+    User.hasMany(
+        models.Property,
+        {
+            as: 'properties',
+            foreignKey: { allowNull: false },
+            onDelete: 'CASCADE'
         }
+    )
+}
+
+User.serialize = function (user) {
+    return {
+        username: user.username || '',
+        email: user.email || '',
+    };
+};
+
+User.validatePassword = function (password, user) {
+    return bcrypt.compare(password, user.password);
+};
+
+User.hashPassword = function (password) {
+    return bcrypt.hash(password, 10);
+};
+
+User.apiRepr = function (user) {
+    return {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        properties: user.properties
     }
+}
 
-    return User;
 
+module.exports = {
+    User
 }

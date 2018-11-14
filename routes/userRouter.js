@@ -2,7 +2,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 
-const { User } = require('./models');
+const { User } = require('../models');
 
 const router = express.Router();
 
@@ -10,7 +10,7 @@ const jsonParser = bodyParser.json();
 
 // Post to register a new user
 router.post('/', jsonParser, (req, res) => {
-    const requiredFields = ['username', 'password'];
+    const requiredFields = ['username', 'password', 'email'];
     const missingField = requiredFields.find(field => !(field in req.body));
 
     if (missingField) {
@@ -22,7 +22,7 @@ router.post('/', jsonParser, (req, res) => {
         });
     }
 
-    const stringFields = ['username', 'password', 'firstName', 'lastName'];
+    const stringFields = ['username', 'password', 'email'];
     const nonStringField = stringFields.find(
         field => field in req.body && typeof req.body[field] !== 'string'
     );
@@ -92,16 +92,15 @@ router.post('/', jsonParser, (req, res) => {
         });
     }
 
-    let { username, password, firstName = '', lastName = '' } = req.body;
+    let { username, password, email } = req.body;
     // Username and password come in pre-trimmed, otherwise we throw an error
     // before this
-    firstName = firstName.trim();
-    lastName = lastName.trim();
+    email = email.trim();
 
-    return User.find({ username })
-        .count()
-        .then(count => {
-            if (count > 0) {
+    return User.findOne({ where: { username: username } })
+        .then(user => {
+            if (user) {
+                console.log("user exists!")
                 // There is an existing user with the same username
                 return Promise.reject({
                     code: 422,
@@ -111,18 +110,20 @@ router.post('/', jsonParser, (req, res) => {
                 });
             }
             // If there is no existing user, hash the password
+            console.log("hash password... or not")
             return User.hashPassword(password);
         })
         .then(hash => {
+            console.log("start creating the user")
             return User.create({
                 username,
                 password: hash,
-                firstName,
-                lastName
-            });
-        })
-        .then(user => {
-            return res.status(201).json(user.serialize());
+                email
+            })
+                .then((user) => {
+                    console.log("done creating the user")
+                    return res.status(201).json(User.serialize(user));
+                })
         })
         .catch(err => {
             // Forward validation errors on to the client, otherwise give a 500
@@ -130,7 +131,7 @@ router.post('/', jsonParser, (req, res) => {
             if (err.reason === 'ValidationError') {
                 return res.status(err.code).json(err);
             }
-            res.status(500).json({ code: 500, message: 'Internal server error' });
+            res.status(500).json({ code: 500, message: err });
         });
 });
 
@@ -139,9 +140,23 @@ router.post('/', jsonParser, (req, res) => {
 // if we're creating users. keep in mind, you can also
 // verify this in the Mongo shell.
 router.get('/', (req, res) => {
-    return User.find()
-        .then(users => res.json(users.map(user => user.serialize())))
+    return User.findAll()
+        .then(users => res.json(users.map(user => User.apiRepr(user))))
         .catch(err => res.status(500).json({ message: 'Internal server error' }));
+});
+
+
+////DEV ONLY - NO TESTS NEEDED
+router.delete('/', (req, res) => {
+    return User.findAll()
+        .then(users => users.map(user => User.destroy({
+            where: {
+                id: user.id
+            }
+        }).then(
+            () => res.json({ message: "All users deleted" })
+        )))
+        .catch(err => res.status(500).json({ message: err }));
 });
 
 module.exports = { router };
