@@ -146,16 +146,14 @@ router.get('/', (req, res) => {
 });
 
 
-////DEV ONLY - NO TESTS NEEDED
-router.delete('/', (req, res) => {
-    return User.findAll()
-        .then(users => users.map(user => User.destroy({
-            where: {
-                id: user.id
-            }
-        }).then(
-            () => res.json({ message: "All users deleted" })
-        )))
+router.delete('/:id', (req, res) => {
+    return User.destroy({
+        where: {
+            id: req.param.id
+        }
+    }).then(
+        () => res.status(204).json({ message: "user deleted" })
+    )
         .catch(err => res.status(500).json({ message: err }));
 });
 

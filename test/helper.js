@@ -2,13 +2,11 @@ require('dotenv').config();
 const { PORT } = require('../config');
 const { runServer, closeServer } = require('../server');
 const { sequelize } = require('../db/sequelize');
-console.log("enters helper file")
 // we have global `before` and `after` routines here
 // that run before and after the entire suite of tests
 // run (even when there's multiple test files).
 
 before(function () {
-    console.log("enters before hook")
     // sequelize will create all tables it needs for the models
     // it has imported in `../db/sequelize`.
     return sequelize
@@ -19,7 +17,6 @@ before(function () {
         // start the server only after we've successfully created our
         // tables
         .then(() => {
-            console.log("runs the server")
             runServer(PORT);
         })
         .catch((error) => {
