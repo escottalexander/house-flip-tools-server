@@ -1,7 +1,16 @@
+require('dotenv').config();
 const express = require('express');
+const { PORT, DATABASE_URL, CLIENT_ORIGIN } = require('./config');
 const app = express();
+const { sequelize } = require('./db/sequelize');
 const cors = require('cors');
-const { CLIENT_ORIGIN } = require('./config');
+const morgan = require('morgan');
+const passport = require('passport');
+
+const { userRouter, propertyRouter } = require('./routes');
+const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
+
+app.use(morgan('common'));
 
 app.use(
     cors({
@@ -9,13 +18,58 @@ app.use(
     })
 );
 
-const PORT = process.env.PORT || 3000;
-app.get('/', (req, res) =>
-    res.status(200).json({ welcome: user }))
-app.get('/api/*', (req, res) => {
-    res.json({ ok: true });
+passport.use(localStrategy);
+passport.use(jwtStrategy);
+
+const jwtAuth = passport.authenticate('jwt', {
+    session: false
 });
 
-app.listen(PORT, () => console.log(`Listening on port ${PORT}`));
+app.use('/api/users/', userRouter);
+app.use('/api/auth/', authRouter);
+app.use('/dashboard', jwtAuth, propertyRouter);
 
-module.exports = { app };
+app.use('*', (req, res) => {
+    return res.status(404).json({ message: 'Not Found' });
+});
+
+let server;
+
+function runServer(port) {
+    return new Promise((resolve, reject) => {
+        try {
+            server = app.listen(port, () => {
+                console.log(`App listening on port ${port}`);
+                resolve();
+            });
+        }
+        catch (err) {
+            console.error(`Can't start server: ${err}`);
+            reject(err);
+        }
+    });
+}
+
+function closeServer() {
+    return new Promise((resolve, reject) => {
+        // not a promise yet, but will be soon?
+        // https://github.com/sequelize/sequelize/pull/5776
+        console.log('Closing server');
+        server.close(err => {
+            if (err) {
+                return reject(err);
+            }
+            resolve();
+        });
+    });
+}
+
+if (require.main === module) {
+    runServer(PORT).catch(
+        err => {
+            console.error(`Can't start server: ${err}`);
+            throw err;
+        });
+};
+
+module.exports = { app, runServer, closeServer };
