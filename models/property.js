@@ -23,7 +23,7 @@ const Property = sequelize.define('Property', {
     lot_size: { type: Sequelize.DECIMAL },
     bedrooms: { type: Sequelize.INTEGER },
     bathrooms: { type: Sequelize.DECIMAL },
-    stories: 2
+    stories: { type: Sequelize.INTEGER }
 
 }, { tableName: 'properties', underscored: true });
 

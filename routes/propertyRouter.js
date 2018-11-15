@@ -1,39 +1,48 @@
 'use strict';
 const express = require('express');
+const Sequelize = require('sequelize');
 const { User, Property, Improvement } = require('../models');
 const router = express.Router();
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
+const Op = Sequelize.Op
 
-//DEV ONLY - NO TEST REQUIRED
-router.get('/', (req, res) => Property.findAll(
-    {
-        where: { user_id: req.user.id },
-        limit: 50,
+router.get('/:id', (req, res) => {
+    Property.findAll(
+        {
+            where: {
+                user_id: req.params.id
+            },
+            include: [{
+                model: Improvement,
+                as: 'improvements'
+            }]
+        })
+        .then(properties => res.json({
+            properties: properties.map(property => Property.apiRepr(property))
+        }))
+});
+
+
+router.get('/:id/:slug', (req, res) => {
+    console.log(req.user, req.params)
+    Property.findOne({
+        where: {
+            user_id: req.params.id,
+            slug: req.params.slug
+        },
         include: [{
             model: Improvement,
             as: 'improvements'
         }]
     })
-    .then(properties => res.json({
-        properties: properties.map(property => Property.apiRepr(property))
-    }))
-);
-
-
-router.get('/:slug', (req, res) => Property.findOne({
-    where: { user_id: req.user.id },
-    slug: req.params.slug,
-    include: [{
-        model: Improvement,
-        as: 'improvements'
-    }]
-})
-    .then(property => res.json(Property.apiRepr(property)))
+        .then(property => res.json(Property.apiRepr(property)))
+}
 );
 
 router.post('/add', jsonParser, (req, res) => {
     const requiredFields = ['address'];
+    console.log(req.user)
     for (let i = 0; i < requiredFields.length; i++) {
         const field = requiredFields[i];
         if (!(field in req.body)) {

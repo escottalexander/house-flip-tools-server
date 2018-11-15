@@ -1,5 +1,5 @@
 'use strict';
-
+require('dotenv').config();
 // this module initializes and exports a sequelize instance
 // connected to the database specified in `../config.js`.
 // Sequelize uses a *singleton* design pattern, meaning

@@ -1,5 +1,5 @@
 const env = process.env.NODE_ENV || 'development'
-
+console.log(env)
 // default to dev database
 const DATABASE_URL = (
     process.env.DATABASE_URL ||
