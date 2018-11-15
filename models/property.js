@@ -47,6 +47,7 @@ Property.associate = function (models) {
 
 Property.apiRepr = function (property) {
     return {
+        userId: property.user_id,
         propertyId: property.id,
         slug: property.slug,
         imgSrc: property.image_src,

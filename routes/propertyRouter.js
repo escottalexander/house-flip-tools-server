@@ -16,13 +16,13 @@ router.get('/', (req, res) => Property.findAll(
         }]
     })
     .then(properties => res.json({
-        properties: properties.map(property => Property.apiRepr(property)),
-        user: req.user
+        properties: properties.map(property => Property.apiRepr(property))
     }))
 );
 
 
 router.get('/:slug', (req, res) => Property.findOne({
+    where: { user_id: req.user.id },
     slug: req.params.slug,
     include: [{
         model: Improvement,
