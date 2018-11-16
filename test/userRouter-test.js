@@ -24,7 +24,7 @@ const {
 const expect = chai.expect;
 
 const newUser = {
-    email: "freddy@mercury.com",
+    email: "jerry@mercury.com",
     username: "JohnDoe91",
     password: "password11"
 };
@@ -37,11 +37,6 @@ chai.use(chaiHttp);
 
 describe("User endpoints", function () {
     it("should return 201 HTTP status code on new user register", function () {
-        // for Mocha tests, when we're dealing with asynchronous operations,
-        // we must either return a Promise object or else call a `done` callback
-        // at the end of the test. The `chai.request(server).get...` call is asynchronous
-        // and returns a Promise, so we just return it.
-
         return chai
             .request(app)
             .post("/api/users")
