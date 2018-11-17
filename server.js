@@ -27,7 +27,7 @@ const jwtAuth = passport.authenticate('jwt', {
 
 app.use('/api/users/', userRouter);
 app.use('/api/auth/', authRouter);
-app.use('/dashboard', jwtAuth, propertyRouter);
+app.use('/api/properties/', jwtAuth, propertyRouter);
 
 app.use('*', (req, res) => {
     return res.status(404).json({ message: 'Not Found' });

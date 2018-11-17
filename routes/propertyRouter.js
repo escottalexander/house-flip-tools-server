@@ -25,7 +25,6 @@ router.get('/:id', (req, res) => {
 
 
 router.get('/:id/:slug', (req, res) => {
-    console.log(req.user, req.params)
     Property.findOne({
         where: {
             user_id: req.params.id,

@@ -36,6 +36,10 @@ const newUser2 = {
 chai.use(chaiHttp);
 
 describe("User endpoints", function () {
+    after(function () {
+        return User.destroy({ where: { username: newUser2.username } });
+    });
+
     it("should return 201 HTTP status code on new user register", function () {
         return chai
             .request(app)

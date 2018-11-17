@@ -35,13 +35,9 @@ const token = jwt.sign({
 function seedPropertyData(userId) {
     user_id = userId
     const properties = [];
-    for (let i = 0; i <= 10; i++) {
+    for (let i = 1; i <= 3; i++) {
         properties.push(generatePropertyData(userId));
     }
-    // for (let h = 0; h < properties.length; h++) {
-    //     properties[h].user_id = userId;
-    //     console.log(properties[h])
-    // }
 
     return Promise.all(properties)
         .catch(err => console.dir(err))
@@ -76,7 +72,7 @@ function generatePropertyData(UserId) {
     return Property.create({
         user_id: UserId,
         slug: faker.helpers.slugify(address),
-        imgSrc: "",
+        image_src: "",
         address: address,
         city: faker.address.city(),
         state: faker.address.state(),
@@ -84,19 +80,19 @@ function generatePropertyData(UserId) {
         description: faker.lorem.words(),
         price: faker.random.number(),
         projectedValue: faker.random.number(),
-        yearBuilt: faker.random.number(),
-        roofType: faker.lorem.word(),
-        foundationType: faker.lorem.word(),
-        exteriorMaterial: faker.lorem.word(),
+        year_built: faker.random.number(),
+        roof_type: faker.lorem.word(),
+        foundation_type: faker.lorem.word(),
+        exterior_material: faker.lorem.word(),
         basement: faker.lorem.word(),
         notes: faker.lorem.words(),
-        floorSize: faker.random.number(),
-        lotSize: faker.random.number(),
+        floor_size: faker.random.number(),
+        lot_size: faker.random.number(),
         bedrooms: faker.random.number(),
         bathrooms: faker.random.number(),
         stories: faker.random.number(),
-        createdAt: date,
-        updatedAt: date,
+        // createdAt: date,
+        // updatedAt: date,
         // improvements: [{
         //     // property_id: Property.id,
         //     name: "new roof",
@@ -121,55 +117,36 @@ describe('Property endpoint tests', function () {
 
 
     beforeEach(function () {
-        return User.hashPassword(password).then(password =>
-            User.create({
-                email,
-                username,
-                password
-            })
-        )
+        return User.hashPassword(password)
+            .then(password =>
+                User.create({
+                    email,
+                    username,
+                    password
+                })
+            )
             .then((user) => {
                 seedPropertyData(user.id)
             })
-            .catch(err => console.dir(err))
+            .catch(err => console.log(err))
 
     });
 
     afterEach(function () {
-        return User.destroy({ where: { username } });
-    });
-    // to make tests quicker, only drop all rows from each
-    // table in between tests, instead of recreating tables
-    // beforeEach(function () {
-    //     return Property
-    //         // .truncate drops all rows in this table
-    //         .destroy({ cascade: true })
-    //     // then seed db with new test data
-
-    // });
+        return User.destroy({ where: { username } })
+            .catch(err => console.log(err))
+    })
 
 
     describe('GET endpoint', function () {
 
         it('should return all existing properties for user', function () {
-            // strategy:
-            //    1. get back all restaurants returned by by GET request to `/restaurants`
-            //    2. prove res has right status, data type
-            //    3. prove the number of restaurants we got back is equal to number
-            //       in db.
-            //
-            // need to have access to mutate and access `res` across
-            // `.then()` calls below, so declare it here so can modify in place
-            let res;
-
             return chai.request(app)
-                .get(`/dashboard/${user_id}`)
+                .get(`/api/properties/${user_id}`)
                 .set('authorization', `Bearer ${token}`)
-                .then(function (_res) {
-                    // so subsequent .then blocks can access resp obj.
-                    res = _res;
+                .then(function (res) {
+
                     res.should.have.status(200);
-                    // otherwise our db seeding didn't work
                     res.body.properties.should.have.length.of.at.least(1);
                     return Property.findAndCountAll()
                         .then(function (obj) {
@@ -179,191 +156,118 @@ describe('Property endpoint tests', function () {
 
         });
 
-        it('should return a single restaurant by id', function () {
-            // strategy:
-            //    1. Get a restaurant from db
-            //    2. Prove you can retrieve it by id at `/restaurants/:id`
-            let restaurant;
-            return Restaurant
+        it('should return a single property by slug', function () {
+            let property;
+            return Property
                 .findOne()
-                .then(_restaurant => {
-                    restaurant = _restaurant
+                .then(property => {
                     return chai.request(app)
-                        .get(`/restaurants/${restaurant.id}`);
+                        .get(`/api/properties/${user_id}/${property.slug}`)
+                        .set('authorization', `Bearer ${token}`)
                 })
                 .then(res => {
                     res.should.have.status(200);
-                    res.body.id.should.equal(restaurant.id);
+                    res.body.propertyId.should.equal(property.id);
                 })
         });
 
-        it('should return restaurants with right fields', function () {
-            // Strategy: Get back all restaurants, and ensure they have expected keys
+        it('should return properties with right fields', function () {
 
-            let resRestaurant;
+            let resProperty;
             return chai.request(app)
-                .get('/restaurants')
+                .get(`/api/properties/${user_id}`)
+                .set('authorization', `Bearer ${token}`)
                 .then(function (res) {
                     res.should.have.status(200);
                     res.should.be.json;
-                    res.body.restaurants.should.be.a('array');
-                    res.body.restaurants.should.have.length.of.at.least(1);
+                    res.body.properties.should.be.a('array');
+                    res.body.properties.should.have.length.of.at.least(1);
 
-                    res.body.restaurants.forEach(function (restaurant) {
-                        restaurant.should.be.a('object');
-                        restaurant.should.include.keys(
-                            'id', 'name', 'cuisine', 'borough', 'mostRecentGrade', 'address');
+                    res.body.properties.forEach(function (property) {
+                        property.should.be.a('object');
+                        property.should.include.keys(
+                            'id', 'address', 'price', 'roof_type', 'slug', 'description');
                     });
-                    resRestaurant = res.body.restaurants[0];
-                    return Restaurant.findById(resRestaurant.id, { include: [{ model: Grade, as: 'grades' }] });
+                    resProperty = res.body.properties[0];
+                    return Property.findById(resProperty.id, { include: [{ model: Improvement, as: 'improvements' }] });
                 })
-                .then(function (restaurant) {
-
-                    resRestaurant.id.should.equal(restaurant.id);
-                    resRestaurant.name.should.equal(restaurant.name);
-                    resRestaurant.cuisine.should.equal(restaurant.cuisine);
-                    resRestaurant.borough.should.equal(restaurant.borough);
-                    resRestaurant.address.should.have.property('number', restaurant.addressBuildingNumber);
-                    resRestaurant.address.should.have.property('street', restaurant.addressStreet);
-                    resRestaurant.address.should.have.property('zip', restaurant.addressZipcode);
-                    resRestaurant.mostRecentGrade.should.have.property('id', restaurant.mostRecentGrade.id);
-                    resRestaurant.mostRecentGrade.should.have.property('grade', restaurant.mostRecentGrade.grade);
-                    resRestaurant.mostRecentGrade.should.have.property('inspectionDate');
-                    resRestaurant.mostRecentGrade.should.have.property('score', restaurant.mostRecentGrade.score);
-                });
+                .then(function (property) {
+                    resProperty.id.should.equal(property.id);
+                })
         });
     });
 
     describe('POST endpoint', function () {
-        // strategy: make a POST request with data,
-        // then prove that the restaurant we get back has
-        // right keys, and that `id` is there (which means
-        // the data was inserted into db)
-        it('should add a new restaurant', function () {
+        it('should add a new property', function () {
 
-            const newRestaurantData = {
-                name: faker.company.companyName(),
-                cuisine: generateCuisineType(),
-                borough: generateBoroughName(),
-                addressBuildingNumber: faker.address.streetAddress(),
-                addressStreet: faker.address.streetName(),
-                addressZipcode: faker.address.zipCode()
-            };
-            return chai.request(app).post('/restaurants').send(newRestaurantData)
+            const newPropertyData = generatePropertyData(user_id);
+            return chai.request(app).post('/api/properties/add')
+                .set('authorization', `Bearer ${token}`)
+                .send(newPropertyData)
                 .then(function (res) {
                     res.should.have.status(201);
                     res.should.be.json;
                     res.body.should.be.a('object');
                     res.body.should.include.keys(
-                        'id', 'name', 'cuisine', 'borough', 'mostRecentGrade', 'address');
-                    res.body.name.should.equal(newRestaurantData.name);
-                    // cause db should have created id on insertion
+                        'id', 'address', 'price', 'roof_type', 'slug', 'description');
+                    res.body.slug.should.equal(newPropertyData.slug);
                     res.body.id.should.not.be.null;
-                    res.body.cuisine.should.equal(newRestaurantData.cuisine);
-                    res.body.borough.should.equal(newRestaurantData.borough);
-
+                    res.body.address.should.equal(newPropertyData.address);
+                    res.body.price.should.equal(newPropertyData.price);
                     should.not.exist(res.body.mostRecentGrade);
-
-                    return Restaurant.findById(res.body.id);
+                    return Property.findById(res.body.id);
                 })
-                .then(function (restaurant) {
-                    restaurant.name.should.equal(newRestaurantData.name);
-                    restaurant.cuisine.should.equal(newRestaurantData.cuisine);
-                    restaurant.borough.should.equal(newRestaurantData.borough);
-                    restaurant.addressBuildingNumber.should.equal(newRestaurantData.addressBuildingNumber);
-                    restaurant.addressStreet.should.equal(newRestaurantData.addressStreet);
-                    restaurant.addressZipcode.should.equal(newRestaurantData.addressZipcode);
+                .then(function (property) {
+                    property.slug.should.equal(newPropertyData.slug);
+                    property.address.should.equal(newPropertyData.address);
+                    property.price.should.equal(newPropertyData.price);
                 });
         });
     });
 
     describe('PUT endpoint', function () {
 
-        // strategy:
-        //  1. Get an existing restaurant from db
-        //  2. Make a PUT request to update that restaurant
-        //  3. Prove restaurant returned by request contains data we sent
-        //  4. Prove restaurant in db is correctly updated
         it('should update fields you send over', function () {
             const updateData = {
-                name: 'fofofofofofofof',
-                cuisine: 'futuristic fusion'
+                price: 500000,
+                state: 'Utah'
             };
 
-            return Restaurant
+            return Property
                 .findOne()
-                .then(function (restaurant) {
-                    updateData.id = restaurant.id;
-                    console.log()
-                    // make request then inspect it to make sure it reflects
-                    // data we sent
+                .then(function (property) {
+                    updateData.id = property.id;
                     return chai.request(app)
-                        .put(`/restaurants/${restaurant.id}`)
+                        .put(`/api/properties/${property.slug}/${property.id}`)
+                        .set('authorization', `Bearer ${token}`)
                         .send(updateData);
                 })
                 .then(function (res) {
                     res.should.have.status(204);
-                    return Restaurant.findById(updateData.id);
+                    return Property.findById(updateData.id);
                 })
-                .then(function (restaurant) {
-                    restaurant.name.should.equal(updateData.name);
-                    restaurant.cuisine.should.equal(updateData.cuisine);
+                .then(function (property) {
+                    property.price.should.equal(updateData.price);
+                    property.state.should.equal(updateData.state);
                 });
         });
     });
 
     describe('DELETE endpoint', function () {
-        // strategy:
-        //  1. get a restaurant
-        //  2. make a DELETE request for that restaurant's id
-        //  3. assert that response has right status code
-        //  4. prove that restaurant with the id doesn't exist in db anymore
-        it('delete a restaurant by id', function () {
-
-
-            // TODO add assertions about associated grades being deleted
-            let restaurant;
-
+        it('delete a property by slug', function () {
+            let property;
             return Restaurant
                 .findOne()
-                .then(function (_restaurant) {
-                    restaurant = _restaurant;
-                    return chai.request(app).delete(`/restaurants/${restaurant.id}`);
+                .then(function (_property) {
+                    property = _property;
+                    return chai.request(app).delete(`/api/properties/${property.slug}`);
                 })
                 .then(function (res) {
                     res.should.have.status(204);
-                    return Restaurant.findById(restaurant.id);
+                    return Property.findById(property.id);
                 })
-                .then(function (_restaurant) {
-                    // when a variable's value is null, chaining `should`
-                    // doesn't work. so `_restaurant.should.be.null` would raise
-                    // an error. `should.be.null(_restaurant)` is how we can
-                    // make assertions about a null value.
-                    should.not.exist(_restaurant);
-                });
-        });
-    });
-
-    describe('GET grades for a restaurant endpoint', function () {
-
-        it('should return all grades for a restaurant', function () {
-            // strategy:
-            //    1. get id of a restaurant
-            //    2. get back its grades from api
-            //    3. prove count and ids correct
-            let restaurant;
-
-            return Restaurant
-                .findOne({ include: [{ model: Grade, as: 'grades' }] })
-                .then(_restaurant => {
-                    restaurant = _restaurant;
-                    return chai.request(app)
-                        .get(`/restaurants/${restaurant.id}/grades`);
-                })
-                .then(function (res) {
-                    // res.should.have.status(200);
-                    res.body.grades.length.should.equal(restaurant.grades.length);
-                    restaurant.grades.map(grade => grade.id).should.deep.equal(res.body.grades.map(grade => grade.id))
+                .then(function (_property) {
+                    should.not.exist(_property);
                 });
         });
     });
