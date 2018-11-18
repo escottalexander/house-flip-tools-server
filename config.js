@@ -1,5 +1,5 @@
 const env = process.env.NODE_ENV || 'development'
-
+console.log(env)
 // default to dev database
 const DATABASE_URL = (
     process.env.DATABASE_URL ||
@@ -18,5 +18,6 @@ module.exports = {
     DATABASE_URL: env === 'test' ? TEST_DATABASE_URL : DATABASE_URL,
     // see http://docs.sequelizejs.com/en/latest/api/sequelize/#new-sequelizedatabase-usernamenull-passwordnull-options
     SEQUELIZE_OPTIONS: { logging: env === 'test' ? false : console.log },
-    JWT_SECRET: process.env.JWT_SECRET
+    JWT_SECRET: process.env.JWT_SECRET,
+    JWT_EXPIRY: process.env.JWT_EXPIRY || '7d'
 };

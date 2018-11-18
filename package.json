@@ -5,14 +5,24 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "test": "mocha --exit"
+    "test": "NODE_ENV=test mocha --exit "
   },
   "author": "Elliott Alexander",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.18.3",
     "cors": "^2.8.5",
+    "dotenv": "^6.1.0",
     "express": "^4.16.4",
+    "faker": "^4.1.0",
+    "jsonwebtoken": "^8.3.0",
+    "morgan": "^1.9.1",
+    "passport": "^0.4.0",
+    "passport-jwt": "^4.0.0",
+    "passport-local": "^1.0.0",
+    "pg": "^7.6.1",
+    "pg-hstore": "^2.3.2",
     "sequelize": "^4.41.1"
   },
   "devDependencies": {
