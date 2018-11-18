@@ -47,16 +47,12 @@ function seedPropertyData(userId) {
         .catch(err => console.dir(err))
 }
 
-function generateImprovementData(propId) {
+function generateImprovementData() {
     const improvements = ['new floor', 'new roof', 'new plaster', 'kitchen remodel', 'bathroom remodel'];
-    const date = faker.date.recent();
     const improvement = improvements[Math.floor(Math.random() * improvements.length)];
-    return Improvement.create({
-        Property_id: propId,
+    return ({
         name: improvement,
         cost: faker.random.number(),
-        createdAt: date,
-        updatedAt: date,
     })
 
 }
@@ -66,8 +62,8 @@ function generateImprovements(num, propId) {
     for (let i = 0; i < num; i++) {
         improvements.push(generateImprovementData(propId))
     }
-    return Promise.all(improvements)
-        .catch(err => console.dir(err))
+    return improvements;
+
 }
 
 function generatePropertyData(UserId) {
@@ -94,23 +90,13 @@ function generatePropertyData(UserId) {
         bedrooms: faker.random.number(),
         bathrooms: faker.random.number(),
         stories: faker.random.number(),
-        // createdAt: date,
-        // updatedAt: date,
-        // improvements: [{
-        //     // property_id: Property.id,
-        //     name: "new roof",
-        //     cost: 1200
-        // }]
+        improvements: [...generateImprovements(3)]
     }, {
             include: [{
                 model: Improvement,
                 as: 'improvements'
             }]
         })
-        // .then((property) => {
-        //     return generateImprovements(3, property.id)
-        // }
-        // )
         .catch(err =>
             console.log(err)
         )
@@ -336,6 +322,102 @@ describe('Property endpoint tests', function () {
                 })
                 .then(function (_property) {
                     should.not.exist(_property);
+                });
+        });
+    });
+
+    describe('Improvement endpoints', function () {
+        before(function () {
+            return User.hashPassword(password)
+                .then(password =>
+                    User.create({
+                        email,
+                        username,
+                        password
+                    }).catch(err => console.log(err))
+                )
+                .then(async (user) => {
+                    await seedPropertyData(user.id)
+                })
+                .catch(err => console.log(err))
+        });
+
+        after(function () {
+            return User.destroy({ where: { username } })
+                .catch(err => console.log(err))
+        })
+
+        it('should add a new Improvement on POST', function () {
+            return Property
+                .findOne()
+                .then(propertyData => {
+                    const propData = propertyData.dataValues;
+                    const newImprovement = {
+                        propertyId: propData.id,
+                        name: "tile floors",
+                        cost: 3000
+                    }
+                    return chai.request(app).post(`/api/properties/${propData.slug}/add-improvement`)
+                        .set('authorization', `Bearer ${token}`)
+                        .send(newImprovement)
+                        .then(function (res) {
+                            res.should.have.status(201);
+                            res.should.be.json;
+                            res.body.should.be.a('object');
+                            res.body.cost.should.equal(newImprovement.cost);
+                            res.body.propertyId.should.equal(newImprovement.propertyId);
+                        })
+                })
+        });
+
+        it('should update improvements on PUT', function () {
+            const updateData = {
+                name: "landscaping",
+                cost: 4000
+            };
+            return Improvement
+                .findOne()
+                .then(function (improvement) {
+                    updateData.id = improvement.dataValues.id;
+                    return Property
+                        .findOne({ where: { id: improvement.dataValues.property_id } })
+                        .then(property => {
+                            return chai.request(app)
+                                .put(`/api/properties/${property.dataValues.slug}/improvement/${improvement.dataValues.id}`)
+                                .set('authorization', `Bearer ${token}`)
+                                .send(updateData);
+                        })
+                })
+                .then(function (res) {
+                    res.should.have.status(204);
+                    return Improvement.findByPk(updateData.id);
+                })
+                .then(function (improvement) {
+                    improvement.name.should.equal(updateData.name);
+                    improvement.cost.should.equal(updateData.cost);
+                });
+        });
+
+        it('deletes a Improvement on delete', function () {
+            let improvement;
+            return Improvement
+                .findOne()
+                .then(function (_improvement) {
+                    improvement = _improvement
+                    return Property
+                        .findOne({ where: { id: improvement.dataValues.property_id } })
+                        .then(property => {
+                            return chai.request(app)
+                                .delete(`/api/properties/${property.dataValues.slug}/improvement/${improvement.dataValues.id}`)
+                                .set('authorization', `Bearer ${token}`)
+                        })
+                })
+                .then(function (res) {
+                    res.should.have.status(204);
+                    return Improvement.findByPk(improvement.dataValues.id);
+                })
+                .then(function (_improvement) {
+                    should.not.exist(_improvement);
                 });
         });
     });
