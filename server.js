@@ -10,6 +10,7 @@ const passport = require('passport');
 const { userRouter, propertyRouter } = require('./routes');
 const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
 
+
 app.use(morgan('common'));
 
 app.use(
@@ -52,10 +53,9 @@ function runServer(port) {
 
 function closeServer() {
     return new Promise((resolve, reject) => {
-        // not a promise yet, but will be soon?
-        // https://github.com/sequelize/sequelize/pull/5776
         console.log('Closing server');
         server.close(err => {
+            sequelize.close()
             if (err) {
                 return reject(err);
             }

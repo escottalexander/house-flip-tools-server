@@ -1,3 +1,4 @@
+'use strict';
 require('dotenv').config();
 const chai = require('chai');
 const chaiHttp = require('chai-http');
@@ -18,22 +19,25 @@ const email = 'freddy@mercury.com';
 const username = 'exampleUser';
 const password = 'examplePass';
 let user_id;
+let token;
 
-const token = jwt.sign({
-    user: {
-        email,
-        username
-    }
-},
-    JWT_SECRET, {
-        algorithm: 'HS256',
-        subject: username,
-        expiresIn: '7d'
-    }
-);
+
 
 function seedPropertyData(userId) {
     user_id = userId
+    token = jwt.sign({
+        user: {
+            email,
+            username,
+            id: user_id
+        }
+    },
+        JWT_SECRET, {
+            algorithm: 'HS256',
+            subject: username,
+            expiresIn: '7d'
+        }
+    );
     const properties = [];
     for (let i = 1; i <= 3; i++) {
         properties.push(generatePropertyData(userId));
@@ -68,10 +72,9 @@ function generateImprovements(num, propId) {
 
 function generatePropertyData(UserId) {
     const address = `${faker.address.streetAddress()} ${faker.address.streetName()}`;
-    const date = faker.date.recent();
     return Property.create({
         user_id: UserId,
-        slug: faker.helpers.slugify(address),
+        slug: faker.helpers.slugify(address).toLowerCase(),
         image_src: "",
         address: address,
         city: faker.address.city(),
@@ -115,30 +118,28 @@ function generatePropertyData(UserId) {
 
 describe('Property endpoint tests', function () {
 
-
-    beforeEach(function () {
-        return User.hashPassword(password)
-            .then(password =>
-                User.create({
-                    email,
-                    username,
-                    password
-                })
-            )
-            .then((user) => {
-                seedPropertyData(user.id)
-            })
-            .catch(err => console.log(err))
-
-    });
-
-    afterEach(function () {
-        return User.destroy({ where: { username } })
-            .catch(err => console.log(err))
-    })
-
-
     describe('GET endpoint', function () {
+        before(function () {
+            return User.hashPassword(password)
+                .then(password =>
+                    User.create({
+                        email,
+                        username,
+                        password
+                    }).catch(err => console.log(err))
+                )
+                .then(async (user) => {
+                    await seedPropertyData(user.id)
+                })
+                .catch(err => console.log(err))
+
+        });
+
+        after(function () {
+            return User.destroy({ where: { username } })
+                .catch(err => console.log(err))
+        })
+
 
         it('should return all existing properties for user', function () {
             return chai.request(app)
@@ -160,14 +161,15 @@ describe('Property endpoint tests', function () {
             let property;
             return Property
                 .findOne()
-                .then(property => {
+                .then(_property => {
+                    property = _property;
                     return chai.request(app)
-                        .get(`/api/properties/${user_id}/${property.slug}`)
+                        .get(`/api/properties/${user_id}/${property.dataValues.slug}`)
                         .set('authorization', `Bearer ${token}`)
                 })
                 .then(res => {
                     res.should.have.status(200);
-                    res.body.propertyId.should.equal(property.id);
+                    res.body.propertyId.should.equal(property.dataValues.id);
                 })
         });
 
@@ -185,47 +187,91 @@ describe('Property endpoint tests', function () {
 
                     res.body.properties.forEach(function (property) {
                         property.should.be.a('object');
-                        property.should.include.keys(
-                            'id', 'address', 'price', 'roof_type', 'slug', 'description');
                     });
                     resProperty = res.body.properties[0];
-                    return Property.findById(resProperty.id, { include: [{ model: Improvement, as: 'improvements' }] });
+
+                    return Property.findByPk(resProperty.propertyId, { include: [{ model: Improvement, as: 'improvements' }] });
                 })
                 .then(function (property) {
-                    resProperty.id.should.equal(property.id);
+                    resProperty.propertyId.should.equal(property.dataValues.id);
                 })
         });
     });
 
     describe('POST endpoint', function () {
+        beforeEach(function () {
+            return User.hashPassword(password)
+                .then(password =>
+                    User.create({
+                        email,
+                        username,
+                        password
+                    }).catch(err => console.log(err))
+                )
+                .then(async (user) => {
+                    await seedPropertyData(user.id)
+                })
+                .catch(err => console.log(err))
+
+        });
+
+        afterEach(function () {
+            return User.destroy({ where: { username } })
+                .catch(err => console.log(err))
+        })
+
+
         it('should add a new property', function () {
 
-            const newPropertyData = generatePropertyData(user_id);
-            return chai.request(app).post('/api/properties/add')
-                .set('authorization', `Bearer ${token}`)
-                .send(newPropertyData)
-                .then(function (res) {
-                    res.should.have.status(201);
-                    res.should.be.json;
-                    res.body.should.be.a('object');
-                    res.body.should.include.keys(
-                        'id', 'address', 'price', 'roof_type', 'slug', 'description');
-                    res.body.slug.should.equal(newPropertyData.slug);
-                    res.body.id.should.not.be.null;
-                    res.body.address.should.equal(newPropertyData.address);
-                    res.body.price.should.equal(newPropertyData.price);
-                    should.not.exist(res.body.mostRecentGrade);
-                    return Property.findById(res.body.id);
+
+            return generatePropertyData(user_id)
+                .then(newPropertyData => {
+                    const newPropData = newPropertyData.dataValues;
+                    return chai.request(app).post('/api/properties/add')
+                        .set('authorization', `Bearer ${token}`)
+                        .send(newPropData)
+                        .then(function (res) {
+                            res.should.have.status(201);
+                            res.should.be.json;
+                            res.body.should.be.a('object');
+                            res.body.slug.should.equal(newPropData.slug);
+                            res.body.address.should.equal(newPropData.address);
+                            res.body.price.should.equal(newPropData.price);
+                            return Property.findByPk(res.body.propertyId);
+                        })
+                        .then(function (property) {
+                            property.slug.should.equal(newPropData.slug);
+                            property.address.should.equal(newPropData.address);
+                            property.price.should.equal(newPropData.price);
+                        });
+
                 })
-                .then(function (property) {
-                    property.slug.should.equal(newPropertyData.slug);
-                    property.address.should.equal(newPropertyData.address);
-                    property.price.should.equal(newPropertyData.price);
-                });
+
+
         });
     });
 
     describe('PUT endpoint', function () {
+        before(function () {
+            return User.hashPassword(password)
+                .then(password =>
+                    User.create({
+                        email,
+                        username,
+                        password
+                    }).catch(err => console.log(err))
+                )
+                .then(async (user) => {
+                    await seedPropertyData(user.id)
+                })
+                .catch(err => console.log(err))
+
+        });
+
+        after(function () {
+            return User.destroy({ where: { username } })
+                .catch(err => console.log(err))
+        })
 
         it('should update fields you send over', function () {
             const updateData = {
@@ -236,15 +282,15 @@ describe('Property endpoint tests', function () {
             return Property
                 .findOne()
                 .then(function (property) {
-                    updateData.id = property.id;
+                    updateData.id = property.dataValues.id;
                     return chai.request(app)
-                        .put(`/api/properties/${property.slug}/${property.id}`)
+                        .put(`/api/properties/${property.slug}/${property.dataValues.id}`)
                         .set('authorization', `Bearer ${token}`)
                         .send(updateData);
                 })
                 .then(function (res) {
                     res.should.have.status(204);
-                    return Property.findById(updateData.id);
+                    return Property.findByPk(updateData.id);
                 })
                 .then(function (property) {
                     property.price.should.equal(updateData.price);
@@ -254,17 +300,39 @@ describe('Property endpoint tests', function () {
     });
 
     describe('DELETE endpoint', function () {
+        before(function () {
+            return User.hashPassword(password)
+                .then(password =>
+                    User.create({
+                        email,
+                        username,
+                        password
+                    }).catch(err => console.log(err))
+                )
+                .then(async (user) => {
+                    await seedPropertyData(user.id)
+                })
+                .catch(err => console.log(err))
+
+        });
+
+        after(function () {
+            return User.destroy({ where: { username } })
+                .catch(err => console.log(err))
+        })
         it('delete a property by slug', function () {
             let property;
-            return Restaurant
+            return Property
                 .findOne()
                 .then(function (_property) {
-                    property = _property;
-                    return chai.request(app).delete(`/api/properties/${property.slug}`);
+                    property = _property.dataValues;
+                    return chai.request(app)
+                        .delete(`/api/properties/${property.slug}`)
+                        .set('authorization', `Bearer ${token}`);
                 })
                 .then(function (res) {
                     res.should.have.status(204);
-                    return Property.findById(property.id);
+                    return Property.findByPk(property.id);
                 })
                 .then(function (_property) {
                     should.not.exist(_property);

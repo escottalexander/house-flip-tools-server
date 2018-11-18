@@ -5,8 +5,6 @@ const chaiHttp = require("chai-http");
 const jwt = require('jsonwebtoken');
 
 const {
-    TEST_DATABASE_URL,
-    PORT,
     JWT_SECRET
 } = require('../config');
 
@@ -70,6 +68,7 @@ describe("User endpoints", function () {
                 .get(`/api/users`)
                 .set('authorization', `Bearer ${token}`)
                 .then(function (res) {
+                    console.log(res.body)
                     return chai.request(app).delete(`/api/users/${res.body[0].id}`);
                 })
                 .then(function (res) {
