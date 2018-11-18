@@ -51,12 +51,9 @@ function generateImprovementData(propId) {
     const improvements = ['new floor', 'new roof', 'new plaster', 'kitchen remodel', 'bathroom remodel'];
     const date = faker.date.recent();
     const improvement = improvements[Math.floor(Math.random() * improvements.length)];
-    return Improvement.create({
-        Property_id: propId,
+    return ({
         name: improvement,
         cost: faker.random.number(),
-        createdAt: date,
-        updatedAt: date,
     })
 
 }
@@ -66,8 +63,8 @@ function generateImprovements(num, propId) {
     for (let i = 0; i < num; i++) {
         improvements.push(generateImprovementData(propId))
     }
-    return Promise.all(improvements)
-        .catch(err => console.dir(err))
+    return improvements;
+
 }
 
 function generatePropertyData(UserId) {
@@ -94,23 +91,13 @@ function generatePropertyData(UserId) {
         bedrooms: faker.random.number(),
         bathrooms: faker.random.number(),
         stories: faker.random.number(),
-        // createdAt: date,
-        // updatedAt: date,
-        // improvements: [{
-        //     // property_id: Property.id,
-        //     name: "new roof",
-        //     cost: 1200
-        // }]
+        improvements: [...generateImprovements(3)]
     }, {
             include: [{
                 model: Improvement,
                 as: 'improvements'
             }]
         })
-        // .then((property) => {
-        //     return generateImprovements(3, property.id)
-        // }
-        // )
         .catch(err =>
             console.log(err)
         )
@@ -151,6 +138,7 @@ describe('Property endpoint tests', function () {
                     res.body.properties.should.have.length.of.at.least(1);
                     return Property.findAndCountAll()
                         .then(function (obj) {
+                            console.log(res.body.properties[0].improvements)
                             res.body.properties.should.have.lengthOf(obj.count);
                         });
                 })
