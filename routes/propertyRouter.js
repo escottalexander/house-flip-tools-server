@@ -25,7 +25,6 @@ router.get('/:id', (req, res) => {
 
 
 router.get('/:id/:slug', (req, res) => {
-    console.log(req.user, req.params)
     Property.findOne({
         where: {
             user_id: req.params.id,
@@ -42,7 +41,6 @@ router.get('/:id/:slug', (req, res) => {
 
 router.post('/add', jsonParser, (req, res) => {
     const requiredFields = ['address'];
-    console.log(req.user)
     for (let i = 0; i < requiredFields.length; i++) {
         const field = requiredFields[i];
         if (!(field in req.body)) {
@@ -74,8 +72,12 @@ router.post('/add', jsonParser, (req, res) => {
             bathrooms: req.body.bathrooms,
             stories: req.body.stories
         })
-        .then(property => res.status(201).json(Property.apiRepr(property)))
-        .catch(err => res.status(500).send({ message: err.message }));
+        .then(property => {
+            res.status(201).json(Property.apiRepr(property))
+        })
+        .catch(err => {
+            res.status(500).send({ message: err.message })
+        });
 });
 
 

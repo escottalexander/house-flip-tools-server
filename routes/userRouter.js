@@ -109,19 +109,15 @@ router.post('/', jsonParser, (req, res) => {
                     location: 'username'
                 });
             }
-            // If there is no existing user, hash the password
-            console.log("hash password... or not")
             return User.hashPassword(password);
         })
         .then(hash => {
-            console.log("start creating the user")
             return User.create({
                 username,
                 password: hash,
                 email
             })
                 .then((user) => {
-                    console.log("done creating the user")
                     return res.status(201).json(User.serialize(user));
                 })
         })
@@ -154,7 +150,10 @@ router.delete('/:id', (req, res) => {
     }).then(
         () => res.status(204).json({ message: "user deleted" })
     )
-        .catch(err => res.status(500).json({ message: err }));
+        .catch(err => {
+            console.log(err)
+            res.status(500).json({ message: err })
+        });
 });
 
 module.exports = { router };

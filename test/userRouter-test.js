@@ -5,8 +5,6 @@ const chaiHttp = require("chai-http");
 const jwt = require('jsonwebtoken');
 
 const {
-    TEST_DATABASE_URL,
-    PORT,
     JWT_SECRET
 } = require('../config');
 
@@ -24,7 +22,7 @@ const {
 const expect = chai.expect;
 
 const newUser = {
-    email: "freddy@mercury.com",
+    email: "jerry@mercury.com",
     username: "JohnDoe91",
     password: "password11"
 };
@@ -36,12 +34,11 @@ const newUser2 = {
 chai.use(chaiHttp);
 
 describe("User endpoints", function () {
-    it("should return 201 HTTP status code on new user register", function () {
-        // for Mocha tests, when we're dealing with asynchronous operations,
-        // we must either return a Promise object or else call a `done` callback
-        // at the end of the test. The `chai.request(server).get...` call is asynchronous
-        // and returns a Promise, so we just return it.
+    after(function () {
+        return User.destroy({ where: { username: newUser2.username } });
+    });
 
+    it("should return 201 HTTP status code on new user register", function () {
         return chai
             .request(app)
             .post("/api/users")
@@ -71,6 +68,7 @@ describe("User endpoints", function () {
                 .get(`/api/users`)
                 .set('authorization', `Bearer ${token}`)
                 .then(function (res) {
+                    console.log(res.body)
                     return chai.request(app).delete(`/api/users/${res.body[0].id}`);
                 })
                 .then(function (res) {

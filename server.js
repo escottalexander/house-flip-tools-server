@@ -10,6 +10,7 @@ const passport = require('passport');
 const { userRouter, propertyRouter } = require('./routes');
 const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
 
+
 app.use(morgan('common'));
 
 app.use(
@@ -27,7 +28,7 @@ const jwtAuth = passport.authenticate('jwt', {
 
 app.use('/api/users/', userRouter);
 app.use('/api/auth/', authRouter);
-app.use('/dashboard', jwtAuth, propertyRouter);
+app.use('/api/properties/', jwtAuth, propertyRouter);
 
 app.use('*', (req, res) => {
     return res.status(404).json({ message: 'Not Found' });
@@ -52,10 +53,9 @@ function runServer(port) {
 
 function closeServer() {
     return new Promise((resolve, reject) => {
-        // not a promise yet, but will be soon?
-        // https://github.com/sequelize/sequelize/pull/5776
         console.log('Closing server');
         server.close(err => {
+            sequelize.close()
             if (err) {
                 return reject(err);
             }
