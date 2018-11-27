@@ -13,7 +13,7 @@ const TEST_DATABASE_URL = (
 
 module.exports = {
     PORT: process.env.PORT || 8080,
-    CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'https://housefliptools.com',
+    CLIENT_ORIGIN: process.env.CLIENT_ORIGIN || 'http://localhost:3000',
     DATABASE_URL: env === 'test' ? TEST_DATABASE_URL : DATABASE_URL,
     SEQUELIZE_OPTIONS: { logging: env === 'test' ? false : console.log },
     JWT_SECRET: process.env.JWT_SECRET,
