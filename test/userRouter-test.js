@@ -68,7 +68,6 @@ describe("User endpoints", function () {
                 .get(`/api/users`)
                 .set('authorization', `Bearer ${token}`)
                 .then(function (res) {
-                    console.log(res.body)
                     return chai.request(app).delete(`/api/users/${res.body[0].id}`);
                 })
                 .then(function (res) {

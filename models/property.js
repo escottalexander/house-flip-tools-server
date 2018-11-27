@@ -1,8 +1,6 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../db/sequelize');
 
-
-
 const Property = sequelize.define('Property', {
     id: { autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
     slug: { type: Sequelize.STRING, allowNull: false },
