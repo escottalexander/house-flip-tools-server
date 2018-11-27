@@ -2,7 +2,6 @@ const Sequelize = require('sequelize');
 const { sequelize } = require('../db/sequelize');
 const bcrypt = require('bcryptjs');
 
-
 const User = sequelize.define('User', {
     id: { autoIncrement: true, primaryKey: true, type: Sequelize.INTEGER },
     username: { type: Sequelize.TEXT },
@@ -45,7 +44,6 @@ User.apiRepr = function (user) {
         properties: user.properties
     }
 }
-
 
 module.exports = {
     User

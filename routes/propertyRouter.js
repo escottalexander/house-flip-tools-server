@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
 const Op = Sequelize.Op
 
+// GET all properties of user based on user id
 router.get('/:id', (req, res) => {
     Property.findAll(
         {
@@ -23,7 +24,7 @@ router.get('/:id', (req, res) => {
         }))
 });
 
-
+// GET one property of user based on user id and property slug
 router.get('/:id/:slug', (req, res) => {
     Property.findOne({
         where: {
@@ -39,6 +40,7 @@ router.get('/:id/:slug', (req, res) => {
 }
 );
 
+// POST a new property on a specific users account
 router.post('/add', jsonParser, (req, res) => {
     const requiredFields = ['address'];
     for (let i = 0; i < requiredFields.length; i++) {
@@ -80,7 +82,7 @@ router.post('/add', jsonParser, (req, res) => {
         });
 });
 
-
+// PUT a specific property based on properties slug and id
 router.put('/:slug/:id', jsonParser, (req, res) => {
     if (!(req.params.slug && req.body.slug && req.params.slug === req.body.slug.toString()) && !((req.params.id && req.body.id && req.params.id === req.body.id.toString()))) {
         const message = (
@@ -111,6 +113,7 @@ router.put('/:slug/:id', jsonParser, (req, res) => {
         .catch(err => res.status(500).json({ message: 'Internal server error' }));
 });
 
+// DELETE a property by slug
 router.delete('/:slug', (req, res) => {
     return Property
         .destroy({
@@ -123,7 +126,7 @@ router.delete('/:slug', (req, res) => {
 });
 
 
-/// Improvements Routing
+// POST a new improvement on a property
 router.post('/:slug/add-improvement', jsonParser, (req, res) => {
     const requiredFields = ['name', "cost", "propertyId"];
     for (let i = 0; i < requiredFields.length; i++) {
@@ -144,7 +147,7 @@ router.post('/:slug/add-improvement', jsonParser, (req, res) => {
         .catch(err => res.status(500).send({ message: err.message }));
 });
 
-
+// PUT an improvement within a property to edit its details
 router.put('/:slug/improvement/:id', jsonParser, (req, res) => {
     if (!((req.params.id && req.body.id && req.params.id === req.body.id.toString()))) {
         const message = (
@@ -172,6 +175,7 @@ router.put('/:slug/improvement/:id', jsonParser, (req, res) => {
         .catch(err => res.status(500).json({ message: 'Internal server error' }));
 });
 
+// DELETE an imporvement based on improvement id
 router.delete('/:slug/improvement/:id', (req, res) => {
     return Improvement
         .destroy({
