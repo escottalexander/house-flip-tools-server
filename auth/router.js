@@ -21,11 +21,11 @@ router.use(bodyParser.json());
 
 router.post('/login', localAuth, (req, res) => {
 
-    const authToken = createAuthToken(User.apiRepr(req.body));
-    res.json({
-        user: req.body,
-        authToken
-    });
+    return User.find({ where: { username: req.body.username } })
+        .then(user => createAuthToken(User.apiRepr(user)))
+        .then(authToken => res.json({
+            authToken
+        }))
 });
 
 const jwtAuth = passport.authenticate('jwt', { session: false });

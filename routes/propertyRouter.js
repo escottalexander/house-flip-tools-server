@@ -22,6 +22,7 @@ router.get('/:id', (req, res) => {
         .then(properties => res.json({
             properties: properties.map(property => Property.apiRepr(property))
         }))
+        .catch(err => console.log(err))
 });
 
 // GET one property of user based on user id and property slug
