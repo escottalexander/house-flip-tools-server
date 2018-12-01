@@ -56,7 +56,7 @@ router.post('/add', jsonParser, (req, res) => {
         .create({
             user_id: req.user.id,
             slug: slugify(req.body.address),
-            image_src: req.body.imageSrc,
+            image_src: req.body.imgSrc,
             address: req.body.address,
             city: req.body.city,
             state: req.body.state,
@@ -93,11 +93,16 @@ router.put('/:slug/:id', jsonParser, (req, res) => {
         res.status(400).json({ message: message });
     }
     const toUpdate = {};
+
     const updateableFields = ["imgSrc", "address", "city", "state", "zip", "description", "price", "yearBuilt", "roofType", "foundationType", "exteriorMaterial", "basement", "notes", "floorSize", "lotSize", "bedrooms", "bathrooms", "stories"];
 
     updateableFields.forEach(field => {
         if (field in req.body) {
-            toUpdate[field] = req.body[field];
+            if (field === "imgSrc") {
+                toUpdate.image_src = req.body.imgSrc;
+            } else {
+                toUpdate[field] = req.body[field];
+            }
         }
     });
     if (toUpdate.address) {
@@ -176,7 +181,7 @@ router.put('/:slug/improvement/:id', jsonParser, (req, res) => {
         .catch(err => res.status(500).json({ message: 'Internal server error' }));
 });
 
-// DELETE an imporvement based on improvement id
+// DELETE an improvement based on improvement id
 router.delete('/:slug/improvement/:id', (req, res) => {
     return Improvement
         .destroy({

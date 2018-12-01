@@ -6,6 +6,9 @@ const { sequelize } = require('./db/sequelize');
 const cors = require('cors');
 const morgan = require('morgan');
 const passport = require('passport');
+const bodyParser = require('body-parser');
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 const { userRouter, propertyRouter } = require('./routes');
 const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
