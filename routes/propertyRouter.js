@@ -98,19 +98,20 @@ router.put('/:slug/:id', jsonParser, (req, res) => {
 
     updateableFields.forEach(field => {
         if (field in req.body) {
-            if (field === "imgSrc") {
-                toUpdate.image_src = req.body.imgSrc;
-            } else {
-                toUpdate[field] = req.body[field];
-            }
+            toUpdate[field] = req.body[field];
         }
     });
-    if (toUpdate.address) {
-        toUpdate.slug = slugify(toUpdate.address);
+    const underscored = {}
+    for (let item in toUpdate) {
+        underscored[camelToUnderscore(item)] = toUpdate[item];
+    }
+
+    if (underscored.address) {
+        underscored.slug = slugify(underscored.address);
     }
 
     return Property
-        .update(toUpdate, {
+        .update(underscored, {
             where: {
                 slug: req.params.slug
             }
@@ -150,7 +151,10 @@ router.post('/:slug/add-improvement', jsonParser, (req, res) => {
             cost: req.body.cost
         })
         .then(improvement => res.status(201).json(Improvement.apiRepr(improvement)))
-        .catch(err => res.status(500).send({ message: err.message }));
+        .catch(err => {
+            console.log(err)
+            res.status(500).send({ message: err.message })
+        });
 });
 
 // PUT an improvement within a property to edit its details
@@ -200,5 +204,8 @@ function slugify(text) {
         .replace(/[\s\W-]+/g, '-');
 }
 
+function camelToUnderscore(key) {
+    return key.replace(/([A-Z])/g, "_$1").toLowerCase();
+}
 
 module.exports = { router };
