@@ -106,6 +106,10 @@ router.put('/:slug/:id', jsonParser, (req, res) => {
         underscored[camelToUnderscore(item)] = toUpdate[item];
     }
 
+    if (underscored.img_src) {
+        underscored.image_src = underscored.img_src;
+    }
+
     if (underscored.address) {
         underscored.slug = slugify(underscored.address);
     }
