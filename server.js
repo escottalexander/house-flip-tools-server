@@ -13,15 +13,17 @@ app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 const { userRouter, propertyRouter } = require('./routes');
 const { router: authRouter, localStrategy, jwtStrategy } = require('./auth');
 
-
+// Logging
 app.use(morgan('common'));
 
+// CORS policy - CLIENT_ORIGIN enviroment variable must be set
 app.use(
     cors({
         origin: CLIENT_ORIGIN
     })
 );
 
+// Initialize passport with our authentication strategies
 passport.use(localStrategy);
 passport.use(jwtStrategy);
 
@@ -29,6 +31,7 @@ const jwtAuth = passport.authenticate('jwt', {
     session: false
 });
 
+// Route to different endpoint handlers - check authentication before accessing propertyRouter
 app.use('/api/users/', userRouter);
 app.use('/api/auth/', authRouter);
 app.use('/api/properties/', jwtAuth, propertyRouter);
@@ -37,6 +40,7 @@ app.use('*', (req, res) => {
     return res.status(404).json({ message: 'Not Found' });
 });
 
+// Server set up where it can be exported
 let server;
 
 function runServer(port) {

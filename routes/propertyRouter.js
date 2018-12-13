@@ -76,7 +76,6 @@ router.post('/add', jsonParser, (req, res) => {
             bathrooms: req.body.bathrooms,
             stories: req.body.stories
         })
-        ////
         .then(property => {
             if (request.improvements) {
                 for (let item in request.improvements) {
@@ -89,7 +88,6 @@ router.post('/add', jsonParser, (req, res) => {
             }
             return res.status(201).json(Property.apiRepr(property))
         })
-        ////
         .catch(err => {
             res.status(500).send({ message: err.message })
         });

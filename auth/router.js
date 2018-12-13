@@ -7,6 +7,7 @@ const { User } = require('../models')
 const config = require('../config');
 const router = express.Router();
 
+// Create an auth token with the users credentials and secret pass phrase
 const createAuthToken = function (user) {
     return jwt.sign({ user }, config.JWT_SECRET, {
         subject: user.username,
@@ -19,6 +20,7 @@ const localAuth = passport.authenticate('local', { session: false });
 
 router.use(bodyParser.json());
 
+// Login endpoint - Verify user exists and password is correct. Provide a new JWT token.
 router.post('/login', localAuth, (req, res) => {
 
     return User.find({ where: { username: req.body.username } })
@@ -30,6 +32,7 @@ router.post('/login', localAuth, (req, res) => {
 
 const jwtAuth = passport.authenticate('jwt', { session: false });
 
+// Refresh endpoint to refresh expiration of JWT token - not used in house flip tools
 router.post('/refresh', jwtAuth, (req, res) => {
     const authToken = createAuthToken(req.user);
     res.json({ authToken });
